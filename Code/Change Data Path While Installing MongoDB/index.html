@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📍 Change Data Path While Installing MongoDB</title>
+    <style>
+      body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+      }
+      h1,
+      h2,
+      h3 {
+        color: #ffcc00;
+      }
+      code {
+        background-color: #1e1e1e;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #00e676;
+      }
+      pre {
+        background-color: #1e1e1e;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      ul,
+      ol {
+        margin-left: 20px;
+      }
+      hr {
+        border: 1px solid #333;
+        margin: 20px 0;
+      }
+      .note {
+        background-color: #263238;
+        padding: 10px;
+        border-left: 5px solid #ffcc00;
+        border-radius: 4px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>📍 Change Data Path While Installing MongoDB</h1>
+    <p>
+      Instead of moving the database folder later, you can directly set
+      MongoDB’s <b>data</b> and <b>log</b> paths during installation, so it uses
+      a separate drive (like <code>D:\</code>) from day one.
+    </p>
+
+    <hr />
+
+    <h2>🧰 What You’ll Need</h2>
+    <ul>
+      <li>MongoDB Community Server <b>.msi</b> installer for Windows</li>
+      <li>
+        A target folder on another drive (e.g., <code>D:\mongodb\data</code> and
+        <code>D:\mongodb\log</code>)
+      </li>
+      <li>Administrator rights (to install MongoDB as a Windows service)</li>
+    </ul>
+
+    <hr />
+
+    <h2>🪄 Steps to Set Custom Data Path During Installation</h2>
+    <ol>
+      <li>
+        📥 <b>Download the Installer</b> Get it from the official site:
+        <a href="https://www.mongodb.com/try/download/community" target="_blank"
+          >MongoDB Downloads</a
+        >
+      </li>
+      <li>
+        ⚙ <b>Start the Installation Wizard</b> - Select
+        <b>Custom</b> installation (not “Complete”) - This allows you to modify
+        installation settings.
+      </li>
+      <li>
+        🗂 <b>Set Custom Data & Log Paths</b>
+        When the wizard asks about running MongoDB as a service, change:
+        <pre>
+Data Directory: D:\mongodb\data  
+Log Directory:  D:\mongodb\log</pre
+        >
+        This updates the <code>mongod.cfg</code> file automatically.
+      </li>
+      <li>
+        🚀 <b>Finish Installation</b>
+        MongoDB will immediately use the new folder on D: for all database
+        storage.
+      </li>
+    </ol>
+
+    <hr />
+
+    <h2>⚠ Notes</h2>
+    <div class="note">
+      <ul>
+        <li>
+          If you use the ZIP version, you’ll need to edit
+          <code>mongod.cfg</code> manually before running MongoDB.
+        </li>
+        <li>
+          On Linux, set <code>dbPath</code> in
+          <code>/etc/mongod.conf</code> before starting the service.
+        </li>
+        <li>Ensure the drive has enough free space for future growth.</li>
+      </ul>
+    </div>
+  </body>
+</html>
