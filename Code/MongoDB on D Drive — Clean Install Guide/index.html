@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MongoDB on D: Drive — Clean Install Guide 🧭</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #121a2a;
+        --soft: #1b2740;
+        --text: #e7ecf6;
+        --muted: #a9b3c7;
+        --accent: #7cc4ff;
+        --green: #7bffb5;
+        --yellow: #ffe07b;
+        --red: #ff8b8b;
+        --code: #0d1526;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+          "Segoe UI Emoji";
+        background: linear-gradient(
+          180deg,
+          var(--bg),
+          #0e1529 40%,
+          #0b1220 100%
+        );
+        color: var(--text);
+        line-height: 1.6;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 48px auto;
+        padding: 0 20px;
+      }
+      .card {
+        background: linear-gradient(180deg, var(--card), #0e1628);
+        border: 1px solid #1e2a46;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        border-radius: 16px;
+        padding: 28px;
+        margin: 18px 0;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+        margin: 0 0 14px;
+      }
+      h1 {
+        font-size: 34px;
+        letter-spacing: 0.2px;
+      }
+      h2 {
+        font-size: 22px;
+        color: var(--accent);
+      }
+      h3 {
+        font-size: 18px;
+        color: var(--yellow);
+      }
+      p,
+      li {
+        color: var(--text);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .ok {
+        color: var(--green);
+        font-weight: 600;
+      }
+      .warn {
+        color: var(--yellow);
+        font-weight: 600;
+      }
+      .bad {
+        color: var(--red);
+        font-weight: 600;
+      }
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+      .grid.cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      @media (max-width: 820px) {
+        .grid.cols-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .kbd {
+        display: inline-block;
+        padding: 2px 7px;
+        border: 1px solid #2a3657;
+        border-bottom-width: 2px;
+        border-radius: 6px;
+        background: #0f1930;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+        font-size: 0.95em;
+      }
+      pre {
+        margin: 0;
+        background: var(--code);
+        border: 1px solid #213055;
+        border-radius: 12px;
+        padding: 14px;
+        overflow: auto;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+        font-size: 0.94em;
+      }
+      pre {
+        margin: 0;
+        background: var(--code);
+        border: 1px solid #213055;
+        border-radius: 12px;
+        padding: 14px;
+        overflow-x: auto; /* ✅ Enables horizontal scroll if content is too long */
+        white-space: pre-wrap; /* ✅ Wraps lines when possible */
+        word-break: break-word; /* ✅ Avoids breaking layout */
+      }
+
+      .grid code,
+      .grid pre {
+        max-width: 100%; /* ✅ Keeps within card */
+      }
+
+      .step {
+        flex-wrap: wrap; /* ✅ Ensures text/code doesn't push out */
+      }
+
+      .path {
+        color: #b4cdfa;
+      }
+      .step {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 12px;
+        border: 1px dashed #22345e;
+        border-radius: 12px;
+        background: #0f1930;
+      }
+      .step .num {
+        flex: 0 0 auto;
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        background: #18315c;
+        color: #cfe4ff;
+        border: 1px solid #2b4b80;
+      }
+      .tip {
+        background: #0f1f38;
+        border-left: 4px solid #2b79ff;
+        padding: 12px 14px;
+        border-radius: 10px;
+      }
+      .checklist li {
+        margin: 6px 0;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        border: 1px solid #2b4b80;
+        background: #0f1930;
+        color: #cfe4ff;
+        font-size: 0.9em;
+      }
+      .footer {
+        text-align: center;
+        color: var(--muted);
+        margin: 20px 0 60px;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid #22345e;
+        margin: 22px 0;
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="card">
+        <h1>
+          Install MongoDB on <span class="pill">D:\</span> — Clean, Organized,
+          and Upgrade-Friendly 🚀
+        </h1>
+        <p class="muted">
+          This guide helps you install MongoDB on a custom path (e.g.,
+          <span class="path">D:\mongodb</span>) with a tidy structure for data,
+          logs, and config. Works great for learning and production-style setups
+          on Windows. 💻
+        </p>
+      </header>
+
+      <!-- Why D:\ -->
+      <section class="card">
+        <h2>Why install on D:\ instead of C:\? 🤔</h2>
+        <ul class="checklist">
+          <li>
+            🗂️ Keep OS drive clean and avoid filling <strong>C:</strong> with
+            large database files.
+          </li>
+          <li>
+            💾 Put <strong>data</strong> on a bigger/faster drive for growth and
+            performance.
+          </li>
+          <li>
+            🧰 Separate <em>binaries</em> from <em>data</em> for easier upgrades
+            and backups.
+          </li>
+        </ul>
+        <div class="tip">
+          ✅ You can still install binaries on C: and move only the
+          <span class="pill">dbPath</span> to D:. This guide shows both options;
+          the recommended layout keeps everything under
+          <span class="path">D:\mongodb</span>.
+        </div>
+      </section>
+
+      <!-- Structure -->
+      <section class="card">
+        <h2>Recommended Folder Structure 📁</h2>
+        <pre><code>D:\
+└── mongodb\
+    ├── bin\        ← MongoDB executables (mongod.exe, mongosh.exe, etc.)
+    ├── data\       ← Database files (your collections & indexes)
+    ├── log\        ← Server logs
+    └── config\     ← Config file (mongod.cfg)
+</code></pre>
+        <p class="muted">
+          This keeps things predictable, version-agnostic, and upgrade-friendly.
+        </p>
+      </section>
+
+      <!-- Download -->
+      <section class="card">
+        <h2>Download & Prepare 📥</h2>
+        <div class="grid cols-2">
+          <div>
+            <div class="step">
+              <div class="num">1</div>
+              <div>
+                <p>
+                  Download the latest
+                  <strong>MongoDB Community Server (.msi)</strong> for Windows
+                  from the official site. 🌐
+                </p>
+                <p class="muted">
+                  Choose “Complete” or “Custom” during setup. We’ll customize
+                  paths next.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="step">
+              <div class="num">2</div>
+              <div>
+                <p>Create folders in File Explorer:</p>
+                <pre><code>D:\mongodb\bin
+D:\mongodb\data
+D:\mongodb\log
+D:\mongodb\config
+</code></pre>
+                <p>
+                  Or run in PowerShell <span class="kbd">Win</span>+<span
+                    class="kbd"
+                    >X</span
+                  >
+                  → <span class="kbd">Windows PowerShell</span>:
+                </p>
+                <pre><code>New-Item -ItemType Directory -Force -Path D:\mongodb\bin,D:\mongodb\data,D:\mongodb\log,D:\mongodb\config</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Install options -->
+      <section class="card">
+        <h2>Installer Choices ⚙️</h2>
+        <h3>
+          Option A — Install Everything Under
+          <span class="path">D:\mongodb\bin</span> (Recommended) 🏆
+        </h3>
+        <ol>
+          <li>Run the <strong>.msi</strong>.</li>
+          <li>Pick <strong>Custom</strong> install.</li>
+          <li>
+            Change the install path to <span class="path">D:\mongodb\bin</span>.
+          </li>
+          <li>
+            <strong>Service:</strong>
+            <ul>
+              <li>
+                For learning: uncheck “Install as a Service” to start MongoDB
+                manually.
+              </li>
+              <li>
+                For auto-start: keep it checked. We’ll still point the
+                <span class="pill">dbPath</span> to D: via config.
+              </li>
+            </ul>
+          </li>
+        </ol>
+
+        <h3>Option B — Keep Binaries on C:\, Put Data on D:\ (Also Fine) 🧩</h3>
+        <p>
+          If you prefer defaults, leave install path as
+          <span class="path"
+            >C:\Program Files\MongoDB\Server\&lt;version&gt;</span
+          >, but still set <span class="pill">dbPath</span> to
+          <span class="path">D:\mongodb\data</span> in the config (next
+          section).
+        </p>
+      </section>
+
+      <!-- Config -->
+      <section class="card">
+        <h2>Create the Config File 📝</h2>
+        <p>
+          Make <span class="path">D:\mongodb\config\mongod.cfg</span> with the
+          following:
+        </p>
+        <pre><code>systemLog:
+  destination: file
+  path: D:\mongodb\log\mongod.log
+  logAppend: true
+
+storage:
+  dbPath: D:\mongodb\data
+
+net:
+  bindIp: 127.0.0.1
+  port: 27017
+</code></pre>
+        <div class="tip" style="margin-top: 15px">
+          🔐 <strong>Security later:</strong> When you’re ready to enable
+          authentication, add:
+          <pre><code>security:
+  authorization: enabled</code></pre>
+          and create users first (see “Add a user” below) so you don’t lock
+          yourself out.
+        </div>
+      </section>
+
+      <!-- Start Server -->
+      <section class="card">
+        <h2>Start MongoDB Server ▶️</h2>
+        <div class="grid cols-2">
+          <div>
+            <h3>Run Manually (good for learning) 🧪</h3>
+            <p>Open <strong>PowerShell</strong> and run:</p>
+            <pre><code>D:\mongodb\bin\mongod.exe --config D:\mongodb\config\mongod.cfg</code></pre>
+            <p class="muted">
+              Keep this window open; it’s the server log. Open a second terminal
+              for the shell.
+            </p>
+          </div>
+          <div>
+            <h3>Install as Windows Service (auto-start) 🧷</h3>
+            <ol>
+              <li>Open PowerShell as <strong>Administrator</strong>.</li>
+              <li>Run (adjust paths if your binaries are on C:):</li>
+            </ol>
+            <pre><code>"D:\mongodb\bin\mongod.exe" --config "D:\mongodb\config\mongod.cfg" --install --serviceName "MongoDB"</code></pre>
+            <p>Start it:</p>
+            <pre><code>net start MongoDB</code></pre>
+            <p>Stop/remove later if needed:</p>
+            <pre><code>net stop MongoDB
+"D:\mongodb\bin\mongod.exe" --remove --serviceName "MongoDB"</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Shell -->
+      <section class="card">
+        <h2>Connect with mongosh 💬</h2>
+        <p>
+          Use the MongoDB Shell (<span class="pill">mongosh</span>) to talk to
+          your server.
+        </p>
+        <pre><code>D:\mongodb\bin\mongosh.exe</code></pre>
+        <p>
+          If you added MongoDB to your <strong>PATH</strong>, you can just run:
+        </p>
+        <pre><code>mongosh</code></pre>
+        <p class="muted">
+          You should see a prompt like <code>test&gt;</code> and a connection
+          string <code>mongodb://127.0.0.1:27017</code>.
+        </p>
+      </section>
+
+      <!-- PATH -->
+      <section class="card">
+        <h2>Add MongoDB to PATH (Optional but Handy) 🛣️</h2>
+        <ol>
+          <li>
+            Search Windows for <strong>“Environment Variables”</strong> → “Edit
+            the system environment variables”.
+          </li>
+          <li>
+            Click <strong>Environment Variables…</strong> → under “System
+            variables” select <strong>Path</strong> → <strong>Edit</strong>.
+          </li>
+          <li>
+            Click <strong>New</strong> and add your bin folder path:
+            <div style="margin-top: 6px">
+              <span class="path">D:\mongodb\bin</span>
+            </div>
+          </li>
+          <li>
+            Click <strong>OK</strong> on all dialogs. Open a new terminal and
+            test:
+          </li>
+        </ol>
+        <pre><code>mongod --version
+mongosh --version</code></pre>
+        <p class="ok">If versions print correctly, PATH is set ✅</p>
+      </section>
+
+      <!-- Verify -->
+      <section class="card">
+        <h2>Quick Verify ✅</h2>
+        <ol>
+          <li>Ensure the server is running (manual or service).</li>
+          <li>
+            Open a new terminal and run:
+            <pre><code>mongosh
+show dbs
+db.stats()</code></pre>
+          </li>
+          <li>
+            Create a test database/document:
+            <pre><code>use playground
+db.colors.insertOne({ name: "teal", hex: "#008080" })
+db.colors.find()</code></pre>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Create user -->
+      <section class="card">
+        <h2>Add an Admin User (When Enabling Auth) 🔐</h2>
+        <ol>
+          <li>
+            Start without <code>security.authorization</code> first (or start
+            with
+            <span class="pill">--setParameter enableLocalhostAuthBypass=1</span>
+            during initial setup).
+          </li>
+          <li>
+            In <span class="pill">mongosh</span>:
+            <pre><code>use admin
+db.createUser({
+  user: "root",
+  pwd:  "StrongPassword!123",
+  roles: [ { role: "root", db: "admin" } ]
+})</code></pre>
+          </li>
+          <li>
+            Now enable in
+            <span class="path">D:\mongodb\config\mongod.cfg</span>:
+            <pre><code>security:
+  authorization: enabled</code></pre>
+          </li>
+          <li>
+            Restart MongoDB, then connect:
+            <pre><code>mongosh -u root -p --authenticationDatabase admin</code></pre>
+          </li>
+        </ol>
+        <div class="tip">
+          🧠 Use a unique, strong password. For projects, create app-specific
+          users with minimal roles instead of reusing <code>root</code>.
+        </div>
+      </section>
+
+      <!-- Backups -->
+      <section class="card">
+        <h2>Backups & Upgrades 🧳</h2>
+        <ul>
+          <li>
+            Back up <span class="path">D:\mongodb\data</span> regularly (stop
+            service first for a consistent snapshot, or use
+            <span class="pill">mongodump</span>).
+          </li>
+          <li>
+            To upgrade MongoDB:
+            <ol>
+              <li>Stop service: <code>net stop MongoDB</code></li>
+              <li>
+                Install new version (to the <em>same</em>
+                <span class="path">D:\mongodb\bin</span> or a versioned folder
+                like <span class="path">D:\mongodb\bin-8.0</span>).
+              </li>
+              <li>
+                Keep using the same <span class="pill">dbPath</span> in
+                <span class="path">D:\mongodb\data</span>.
+              </li>
+            </ol>
+          </li>
+        </ul>
+        <div class="tip">
+          📦 Logical backup example:
+          <pre><code>D:\mongodb\bin\mongodump.exe --out D:\mongodb\backup\%DATE%</code></pre>
+        </div>
+      </section>
+
+      <!-- Troubleshooting -->
+      <section class="card">
+        <h2>Troubleshooting 🧯</h2>
+        <ul>
+          <li>
+            ❌
+            <strong
+              >“NonExistentPath: Data directory D:\mongodb\data not
+              found”</strong
+            ><br />
+            Create the folder and ensure your config points to it.
+          </li>
+          <li>
+            ❌ <strong>Port conflict (27017)</strong><br />
+            Change port in <code>mongod.cfg</code>:
+            <pre><code>net:
+  port: 27018</code></pre>
+            Start again.
+          </li>
+          <li>
+            ❌ <strong>Service won’t start</strong><br />
+            Check logs at <span class="path">D:\mongodb\log\mongod.log</span>.
+            Run service commands as <em>Administrator</em>.
+          </li>
+          <li>
+            ❌ <strong>PATH not recognized</strong><br />
+            Close & reopen terminal. Confirm
+            <span class="path">D:\mongodb\bin</span> is in the system
+            <strong>Path</strong>.
+          </li>
+        </ul>
+      </section>
+
+      <!-- Cheatsheet -->
+      <section class="card">
+        <h2>Quick Commands Cheat-Sheet 🧩</h2>
+        <div class="grid cols-2">
+          <div>
+            <pre><code>:: Start server (manual)
+D:\mongodb\bin\mongod.exe --config D:\mongodb\config\mongod.cfg
+
+:: Stop service
+net stop MongoDB
+
+:: Start service
+net start MongoDB
+
+:: Remove service
+"D:\mongodb\bin\mongod.exe" --remove --serviceName "MongoDB"</code></pre>
+          </div>
+          <div>
+            <pre><code>:: Shell
+mongosh
+
+:: Show DBs
+show dbs
+
+:: Use DB & insert doc
+use mydb
+db.items.insertOne({ name: "example", qty: 1 })</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final -->
+      <section class="card">
+        <h2>That’s it! 🎉</h2>
+        <p>
+          With this layout, you’ll have a clean MongoDB install under
+          <span class="path">D:\mongodb</span> and a config that keeps data,
+          logs, and binaries neat and separate. If you want, I can also give you
+          a one-click PowerShell script to create folders, write the config, and
+          install the service automatically. 🛠️
+        </p>
+      </section>
+
+      <p class="footer">Made with ☕ and clean paths • Happy hacking!</p>
+    </div>
+  </body>
+</html>
