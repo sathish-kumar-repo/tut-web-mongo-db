@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MongoDB Mega Tutorial</title>
+    <style>
+      body {
+        background: #0d1117;
+        color: #e6edf3;
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+      }
+      h1,
+      h2,
+      h3 {
+        color: #58a6ff;
+      }
+      a {
+        color: #58a6ff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .toc {
+        background: #161b22;
+        border: 1px solid #30363d;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+      }
+      pre {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 10px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      code {
+        color: #ffa657;
+      }
+      hr {
+        border: none;
+        height: 1px;
+        background: #30363d;
+        margin: 40px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🍃 MongoDB Mega Tutorial</h1>
+    <p>
+      This file contains a complete guide covering MongoDB installation,
+      configuration, data storage, backup, performance, GUI tools, and
+      application integration — all in one place.
+    </p>
+
+    <div class="toc">
+      <h2>📑 Table of Contents</h2>
+      <ol>
+        <li><a href="#install-c-d">💾 Install in C:, Store Data in D:</a></li>
+        <li><a href="#config-deep">📜 MongoDB Configuration Deep Dive</a></li>
+        <li><a href="#backup-restore">🛠 Backup & Restore</a></li>
+        <li><a href="#import-export">⚡ mongoimport & mongoexport</a></li>
+        <li><a href="#indexing">🔍 Indexing & Performance</a></li>
+        <li><a href="#data-modeling">🗄 Data Modeling Best Practices</a></li>
+        <li><a href="#compass">🖥 Using Compass GUI</a></li>
+        <li>
+          <a href="#app-connect">🚀 Connecting MongoDB to Applications</a>
+        </li>
+      </ol>
+    </div>
+
+    <hr />
+
+    <h2 id="install-c-d">💾 1. Install in C:, Store Data in D:</h2>
+    <p>
+      MongoDB binaries can stay in <b>C:</b> but your database files can live on
+      another drive.
+    </p>
+
+    <h3>1️⃣ Create Data Folder on D:</h3>
+    <pre><code>D:\mongodb\data
+D:\mongodb\log</code></pre>
+    Or in PowerShell:
+    <pre><code>New-Item -ItemType Directory -Force -Path D:\mongodb\data, D:\mongodb\log</code></pre>
+
+    <h3>2️⃣ Edit <code>mongod.cfg</code></h3>
+    <p>
+      Usually in
+      <code>C:\Program Files\MongoDB\Server&lt;version&gt;\bin\mongod.cfg</code>
+    </p>
+    <pre><code>systemLog:
+  destination: file
+  path: D:\mongodb\log\mongod.log
+  logAppend: true
+
+storage:
+  dbPath: D:\mongodb\data
+</code></pre>
+
+    <h3>3️⃣ Restart Service:</h3>
+    <pre><code>net stop MongoDB
+net start MongoDB</code></pre>
+
+    <h3>4️⃣ Verify:</h3>
+    Insert a test document:
+    <pre><code>use testDB
+db.items.insertOne({name: "Hello from D:"})</code></pre>
+
+    <hr />
+
+    <h2 id="config-deep">📜 2. MongoDB Configuration Deep Dive</h2>
+    <p>The <code>mongod.cfg</code> file controls MongoDB's behavior.</p>
+    <ul>
+      <li><b>storage.dbPath</b> → Database file location</li>
+      <li><b>systemLog.path</b> → Log file location</li>
+      <li><b>net.port</b> → Listening port (default: 27017)</li>
+      <li>
+        <b>net.bindIp</b> → Allowed network interfaces (use 0.0.0.0 for all)
+      </li>
+      <li>
+        <b>security.authorization</b> → Enable authentication
+        (<code>enabled</code>)
+      </li>
+    </ul>
+
+    Example with authentication:
+    <pre><code>security:
+  authorization: enabled
+</code></pre>
+
+    <hr />
+
+    <h2 id="backup-restore">🛠 3. Backup & Restore</h2>
+    <h3>mongodump:</h3>
+    <pre><code>mongodump --db=mydb --out=D:\backup</code></pre>
+    <h3>mongorestore:</h3>
+    <pre><code>mongorestore --db=mydb --drop D:\backup\mydb</code></pre>
+
+    <hr />
+
+    <h2 id="import-export">⚡ 4. mongoimport & mongoexport</h2>
+    <h3>Import JSON:</h3>
+    <pre><code>mongoimport --db=mydb --collection=users --file=users.json --jsonArray</code></pre>
+    <h3>Import CSV:</h3>
+    <pre><code>mongoimport --db=mydb --collection=users --type=csv --headerline --file=users.csv</code></pre>
+    <h3>Export JSON:</h3>
+    <pre><code>mongoexport --db=mydb --collection=users --out=users.json --jsonArray</code></pre>
+
+    <hr />
+
+    <h2 id="indexing">🔍 5. Indexing & Performance</h2>
+    <p>Indexes speed up queries.</p>
+    <h3>Create Index:</h3>
+    <pre><code>db.users.createIndex({email: 1})</code></pre>
+    <h3>Compound Index:</h3>
+    <pre><code>db.orders.createIndex({customerId: 1, date: -1})</code></pre>
+    <h3>Check Query Plan:</h3>
+    <pre><code>db.users.find({email: "test@example.com"}).explain("executionStats")</code></pre>
+
+    <hr />
+
+    <h2 id="data-modeling">🗄 6. Data Modeling Best Practices</h2>
+    <ul>
+      <li>Embed documents when data is accessed together frequently.</li>
+      <li>Reference documents when data is large or reused often.</li>
+      <li>Keep document size &lt; 16MB.</li>
+    </ul>
+
+    Example:
+    <pre><code>// Embedding
+{
+  _id: 1,
+  title: "Post",
+  comments: [{text: "Nice!"}, {text: "Great!"}]
+}
+
+// Referencing
+{
+  _id: 1,
+  title: "Post"
+}
+{
+  postId: 1,
+  text: "Nice!"
+}
+</code></pre>
+
+    <hr />
+
+    <h2 id="compass">🖥 7. Using Compass GUI</h2>
+    <ol>
+      <li>Download MongoDB Compass from official website.</li>
+      <li>Connect to <code>mongodb://localhost:27017</code></li>
+      <li>Browse databases & collections visually.</li>
+    </ol>
+
+    <hr />
+
+    <h2 id="app-connect">🚀 8. Connecting MongoDB to Applications</h2>
+    <h3>Node.js Example (Mongoose):</h3>
+    <pre><code>const mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost:27017/mydb')
+  .then(() =&gt; console.log("Connected!"))
+  .catch(err =&gt; console.error(err));
+</code></pre>
+
+    <h3>Python Example (PyMongo):</h3>
+    <pre><code>from pymongo import MongoClient
+client = MongoClient("mongodb://localhost:27017/")
+db = client.mydb
+print(db.list_collection_names())
+</code></pre>
+
+    <hr />
+
+    <p><i>End of MongoDB Mega Tutorial 🍃</i></p>
+  </body>
+</html>
