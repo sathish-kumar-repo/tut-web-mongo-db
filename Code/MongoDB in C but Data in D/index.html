@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MongoDB in C: but Data in D:</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #0d1117;
+        color: #c9d1d9;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      h1,
+      h2 {
+        color: #58a6ff;
+      }
+      pre {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 12px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      code {
+        color: #7ee787;
+      }
+      .step {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>💾 Install MongoDB in C: but Store Data in D:</h1>
+    <p>
+      You can keep MongoDB <b>binaries</b> in <code>C:\</code> (default) but
+      store all <b>data</b> in another drive like <code>D:\</code> 🚀
+    </p>
+
+    <div class="step">
+      <h2>1️⃣ Create a Data Folder on D:</h2>
+      <p>📂 In File Explorer:</p>
+      <pre><code>D:\mongodb\data
+D:\mongodb\log</code></pre>
+      <p>⚡ Or in PowerShell:</p>
+      <pre><code>New-Item -ItemType Directory -Force -Path D:\mongodb\data, D:\mongodb\log</code></pre>
+    </div>
+
+    <div class="step">
+      <h2>2️⃣ Update MongoDB Config File (<code>mongod.cfg</code>)</h2>
+      <p>📍 Usually located at:</p>
+      <pre><code>C:\Program Files\MongoDB\Server\&lt;version&gt;\bin\mongod.cfg</code></pre>
+      <p>📝 Open it in Notepad or VS Code and update:</p>
+      <pre><code>systemLog:
+  destination: file
+  path: D:\mongodb\log\mongod.log
+  logAppend: true
+
+storage:
+  dbPath: D:\mongodb\data</code></pre>
+    </div>
+
+    <div class="step">
+      <h2>3️⃣ Restart MongoDB Service</h2>
+      <pre><code>net stop MongoDB
+net start MongoDB</code></pre>
+    </div>
+
+    <div class="step">
+      <h2>4️⃣ Verify the Change</h2>
+      <p>🔍 Go to <code>D:\mongodb\data</code> — you should see files like:</p>
+      <pre><code>collection-0--123456789.wt
+mongod.lock
+_tmp</code></pre>
+      <p>💻 Test in <code>mongosh</code>:</p>
+      <pre><code>use testDB
+db.items.insertOne({name: "Hello from D:"})</code></pre>
+    </div>
+
+    <h2>✅ Result:</h2>
+    <p>
+      MongoDB is <b>installed in C:</b> but <b>stores all data in D:</b>. If you
+      reinstall MongoDB later, just point <code>dbPath</code> to
+      <code>D:\mongodb\data</code> to get your databases back instantly 💡
+    </p>
+  </body>
+</html>
