@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Numbers in MongoDB & JavaScript — A Clear, Practical Guide</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #0b1020;
+        --card: #11172b;
+        --muted: #a9b2c7;
+        --ink: #eaf0ff;
+        --accent: #79ffe1;
+      }
+      html,
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial;
+      }
+      body {
+        max-width: 900px;
+        margin: 3rem auto;
+        padding: 0 1rem;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+      h1 {
+        letter-spacing: 0.3px;
+      }
+      p,
+      li {
+        color: var(--muted);
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas,
+          "Liberation Mono", monospace;
+      }
+      pre {
+        background: #0e1530;
+        border: 1px solid #1d2748;
+        border-radius: 10px;
+        padding: 1rem;
+        overflow: auto;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid #1b2342;
+        border-radius: 12px;
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+      }
+      .tip {
+        border-left: 4px solid #2dd4bf;
+      }
+      .warn {
+        border-left: 4px solid #f43f5e;
+      }
+      .ok {
+        border-left: 4px solid #8b5cf6;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid #1b2342;
+        margin: 2rem 0;
+      }
+      kbd {
+        border: 1px solid #2a365e;
+        border-bottom-color: #1b2342;
+        border-radius: 4px;
+        padding: 0 0.35em;
+        background: #0e1530;
+        color: var(--ink);
+      }
+      .mini {
+        font-size: 0.92rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Numbers in MongoDB &amp; JavaScript — A Clear, Practical Guide</h1>
+    <p class="mini">
+      This guide explains exactly how numeric values behave in the
+      JavaScript-based MongoDB shells (<code>mongo</code>,
+      <code>mongosh</code>), how they map to BSON on disk, and how to choose the
+      right type (<code>double</code>, <code>int32</code>, <code>int64</code>,
+      <code>decimal128</code>) for correctness and performance.
+    </p>
+
+    <div class="card tip">
+      <strong>Essentials (2-minute version)</strong>
+      <ul>
+        <li>
+          In JavaScript, every numeric literal (e.g., <code>5</code>,
+          <code>3.14</code>, <code>1e9</code>) is type <code>number</code>.
+        </li>
+        <li>
+          That <em>single</em> JS type <code>number</code> is implemented as an
+          IEEE-754 64-bit floating-point value.
+        </li>
+        <li>
+          When you insert a bare number from the shell, MongoDB stores it as
+          BSON <code>double</code> (<code>NumberDouble</code>).
+        </li>
+        <li>
+          To store precise integers or decimals, you must be explicit:
+          <code>NumberInt()</code>, <code>NumberLong()</code>,
+          <code>NumberDecimal()</code>.
+        </li>
+      </ul>
+    </div>
+
+    <hr />
+
+    <h2>1) JavaScript vs. BSON: What You’re Really Inserting</h2>
+
+    <div class="grid">
+      <div class="card ok">
+        <h3>JavaScript (in the shell)</h3>
+        <ul>
+          <li>All numeric literals are <code>number</code>.</li>
+          <li>
+            <code>typeof 5 // "number"</code>,
+            <code>typeof 3.14 // "number"</code>
+          </li>
+          <li>
+            <strong>Precision:</strong> integers are exact only up to
+            <code>2^53-1</code> (9,007,199,254,740,991).
+          </li>
+        </ul>
+      </div>
+      <div class="card ok">
+        <h3>BSON (on disk / over the wire)</h3>
+        <ul>
+          <li>
+            <code>double</code> → 64-bit float (<code>NumberDouble</code>)
+          </li>
+          <li><code>int32</code> → 32-bit signed (<code>NumberInt</code>)</li>
+          <li><code>int64</code> → 64-bit signed (<code>NumberLong</code>)</li>
+          <li>
+            <code>decimal128</code> → base-10 128-bit
+            (<code>NumberDecimal</code>)
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card warn">
+      <strong>Key Clarification:</strong> Saying “treated as a 64-bit float”
+      refers to how the JS <em>number</em> is implemented. The
+      <em>type name</em> is still <code>number</code>. When sent to MongoDB
+      unwrapped, it becomes BSON <code>double</code>.
+    </div>
+
+    <hr />
+
+    <h2>2) Quick Demos You Can Paste in <code>mongosh</code></h2>
+
+    <h3>Default behavior (bare numbers → double)</h3>
+    <pre><code>use demo
+db.n.drop()
+
+db.n.insertOne({ a: 5, b: 3.14 })
+db.n.findOne()
+// a and b stored as NumberDouble
+</code></pre>
+
+    <h3>Explicit numeric types</h3>
+    <pre><code>db.n.insertOne({
+  i32: NumberInt(5),             // int32
+  i64: NumberLong("5"),          // int64 (string safest for large)
+  d128: NumberDecimal("3.14")    // decimal128
+})
+</code></pre>
+
+    <h3>Check stored types</h3>
+    <pre><code>db.n.aggregate([
+  { $project: {
+      aType: { $type: "$a" },
+      i32Type: { $type: "$i32" },
+      i64Type: { $type: "$i64" },
+      d128Type: { $type: "$d128" }
+  } }
+])
+</code></pre>
+
+    <hr />
+
+    <h2>3) Which Type Should I Use?</h2>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Use <code>double</code> (default)</h3>
+        <ul>
+          <li>
+            General numeric data where small rounding error is acceptable.
+          </li>
+          <li>Scientific/telemetry where binary FP is standard.</li>
+        </ul>
+        <pre><code>db.c.insertOne({ temperature: 21.5 })   // double
+db.c.insertOne({ attempts: 42 })        // double (unless wrapped)</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Use <code>int32</code>/<code>int64</code></h3>
+        <ul>
+          <li>Counts, indexes, flags — true integers.</li>
+          <li><code>int32</code> for ±2.1B; otherwise <code>int64</code>.</li>
+        </ul>
+        <pre><code>db.c.insertOne({ qty: NumberInt(7) })           // int32
+db.c.insertOne({ counter: NumberLong("9000") }) // int64</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Use <code>decimal128</code></h3>
+        <ul>
+          <li>Money, tax, precise decimal math.</li>
+          <li>Avoids 0.1 + 0.2 ≠ 0.3 issues.</li>
+        </ul>
+        <pre><code>db.c.insertOne({ price: NumberDecimal("19.99") })
+db.c.aggregate([{ $group: { _id: null, total: { $sum: "$price" } } }])</code></pre>
+      </div>
+    </div>
+
+    <hr />
+
+    <h2>4) Precision, Safety &amp; Gotchas</h2>
+
+    <h3>4.1 Binary float surprises</h3>
+    <pre><code>db.fp.drop()
+db.fp.insertOne({ x: 0.1 + 0.2 }) // ~0.30000000000000004 as double
+db.fp.findOne()</code></pre>
+
+    <h3>4.2 Max safe integer in JavaScript</h3>
+    <ul>
+      <li>
+        Safe integer range for JS <code>number</code>: <code>±(2^53-1)</code>.
+      </li>
+      <li>
+        <code>NumberLong</code> stores full 64-bit, but JS arithmetic on it may
+        still lose precision if coerced to <code>number</code>.
+      </li>
+    </ul>
+    <pre><code>db.big.drop()
+db.big.insertOne({ huge: NumberLong("9007199254740993") }) // ok in BSON
+// Be careful doing math on 'huge' in JS — prefer server-side aggregation or decimal128.</code></pre>
+
+    <h3>4.3 Mixed numeric types in one field</h3>
+    <p>
+      Indexes and comparisons work across numeric types, but mixing
+      <code>double</code>/<code>int</code>/<code>decimal</code> in the same
+      field can surprise you. Standardize on one.
+    </p>
+
+    <hr />
+
+    <h2>5) Querying &amp; Casting</h2>
+
+    <h3>Type-aware find</h3>
+    <pre><code>// Only decimal prices:
+db.items.find({ price: { $type: "decimal" } })
+
+// Only int32 quantities:
+db.items.find({ qty: { $type: "int" } })
+</code></pre>
+
+    <h3>Casting in aggregation</h3>
+    <pre><code>db.items.aggregate([
+  { $addFields: {
+      priceDec: { $toDecimal: "$price" },
+      qty64: { $toLong: "$qty" }
+  } },
+  { $match: { priceDec: { $gte: NumberDecimal("10.00") } } }
+])
+</code></pre>
+
+    <hr />
+
+    <h2>6) Writing the Type You Intend</h2>
+
+    <h3>From the shell</h3>
+    <pre><code>// double (default)
+db.c.insertOne({ n: 5 })              // NumberDouble
+
+// integers
+db.c.insertOne({ n: NumberInt(5) })   // int32
+db.c.insertOne({ n: NumberLong("5") })// int64
+
+// exact decimal
+db.c.insertOne({ n: NumberDecimal("5.00") }) // decimal128
+</code></pre>
+
+    <h3>From drivers (Node.js example)</h3>
+    <pre><code>const { Int32, Long, Decimal128 } = require("mongodb");
+await coll.insertOne({
+  i32: new Int32(5),
+  i64: Long.fromString("9007199254740993"),
+  dec: Decimal128.fromString("19.99")
+});
+</code></pre>
+
+    <hr />
+
+    <h2>7) Schema Validation (Keep Types Consistent)</h2>
+    <pre><code>db.createCollection("products", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["price", "qty"],
+      properties: {
+        price: { bsonType: "decimal" },
+        qty:   { bsonType: "int" }   // int32
+      }
+    }
+  }
+})
+</code></pre>
+
+    <hr />
+
+    <h2>8) Copy-Paste Cheatsheet</h2>
+    <pre><code>// JavaScript side
+typeof 5            // "number"  (implemented as 64-bit float)
+Number.isSafeInteger(2**53 - 1) // true
+
+// Default inserts
+db.col.insertOne({ a: 5 })        // BSON double
+
+// Explicit types
+NumberInt(5)                       // int32
+NumberLong("5")                    // int64 (string safest)
+NumberDecimal("1.23")              // decimal128
+
+// Type tests
+{ $type: "double" } | "int" | "long" | "decimal"
+
+// Aggregation casts
+$toDouble | $toInt | $toLong | $toDecimal
+</code></pre>
+
+    <div class="card tip">
+      <strong>Takeaway:</strong> In the shell, <em>what you type</em> is a JS
+      <code>number</code>; <em>what gets stored</em> is BSON
+      <code>double</code> unless you explicitly choose <code>int32</code>,
+      <code>int64</code>, or <code>decimal128</code>. Pick the right type up
+      front to avoid precision bugs.
+    </div>
+  </body>
+</html>
